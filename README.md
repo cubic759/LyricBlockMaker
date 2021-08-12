@@ -1,2 +1,2 @@
 # LyricBlockMaker
-A 
+A lyric editor.
