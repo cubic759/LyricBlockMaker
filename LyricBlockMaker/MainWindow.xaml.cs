@@ -1284,6 +1284,7 @@ namespace LyricBlockMaker
             }
             list.Items.Insert(++position, result);
         }
+
         private void Undo()
         {
             if (position - 1 >= 0)
@@ -1354,6 +1355,7 @@ namespace LyricBlockMaker
                 }
             }
         }
+
         private void Redo()
         {
             if (position + 1 <= list.Items.Count - 1)
