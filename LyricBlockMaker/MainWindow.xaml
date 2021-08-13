@@ -355,6 +355,8 @@
                 <MenuItem Header="退出" Background="White" InputGestureText="Alt+F4" Command="{StaticResource Exit}"></MenuItem>
             </MenuItem>
             <MenuItem Header="编辑" Height="30">
+                <MenuItem Header="撤销" Background="White" InputGestureText="Ctrl+Z" Command="{StaticResource Undo}"></MenuItem>
+                <MenuItem Header="重做" Background="White" InputGestureText="Ctrl+Y" Command="{StaticResource Redo}"></MenuItem>
                 <MenuItem Header="标记" Background="White" InputGestureText="Ctrl+D" Command="{StaticResource UnderLine}"></MenuItem>
                 <MenuItem Header="删除标记" Background="White" InputGestureText="Ctrl+F" Command="{StaticResource DisunderLine}"></MenuItem>
                 <MenuItem Header="删除行" Background="White" InputGestureText="Ctrl+L" Command="{StaticResource DeleteLine}"></MenuItem>
@@ -365,8 +367,8 @@
                 <MenuItem Header="关于" Click="MenuItem_Click_1"></MenuItem>
             </MenuItem>
         </Menu>
-        <ScrollViewer x:Name="scroll"  PreviewMouseDown="viewer_MouseDown" PreviewMouseUp="viewer_MouseUp" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-            <Grid x:Name="grid" >
+        <ScrollViewer x:Name="scroll" Focusable="False" PreviewMouseDown="viewer_MouseDown" PreviewMouseUp="viewer_MouseUp" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <Grid x:Name="grid" Focusable="False">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="30"></RowDefinition>
                 </Grid.RowDefinitions>

@@ -14,11 +14,12 @@ namespace LyricBlockMaker
 
     public partial class MainWindow : Window
     {
-        HistoryRecorder recorder = new HistoryRecorder();
+        private ListBox list = new ListBox();
+        private int position = -1;//to show where it is now
         public MainWindow()
         {
             InitializeComponent();
-            recorder.setGrid(grid);
+            Record();
             string[] cmdLine = Environment.GetCommandLineArgs();
             if (cmdLine.Length > 1)
             {
@@ -56,18 +57,13 @@ namespace LyricBlockMaker
         public MainWindow(bool isMultiple)
         {
             InitializeComponent();
-            recorder.setGrid(grid);
+            Record();
         }
 
         #region B
-        String beforeText = "";
+        private String beforeText = "";
         private void tb_PreviewTextInput(object sender, TextCompositionEventArgs e)//列方块输入的单个字符
         {
-            isSaved = false;
-            if (!Title.EndsWith("*"))
-            {
-                Title += "*";
-            }
             TextBox box = (TextBox)sender;
             Regex re = new Regex("[^0-9]+");
             e.Handled = re.IsMatch(e.Text);
@@ -76,11 +72,6 @@ namespace LyricBlockMaker
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)//检查全部数字
         {
-            isSaved = false;
-            if (!Title.EndsWith("*"))
-            {
-                Title += "*";
-            }
             TextBox box = (TextBox)sender;
             String t = box.Text;
             if (t != null && t != "")
@@ -90,6 +81,11 @@ namespace LyricBlockMaker
                 int number = panel.Children.Count - 1;
                 if (n <= 100 && n > 0)
                 {
+                    isSaved = false;
+                    if (!Title.EndsWith("*"))
+                    {
+                        Title += "*";
+                    }
                     if (n < number)//移除多余
                     {
                         for (int i = number; i > n; i--)
@@ -136,6 +132,7 @@ namespace LyricBlockMaker
                             panel1.Children.Add(b);
                         }
                     }
+                    Record();
                 }
                 else
                 {
@@ -198,6 +195,7 @@ namespace LyricBlockMaker
                 {
                     Title += "*";
                 }
+                Record();
             }
             else if (e.Key == Key.Enter)//插入一行
             {
@@ -229,6 +227,27 @@ namespace LyricBlockMaker
                 b.PreviewKeyDown += B_PreviewKeyDown;
                 b.SetValue(InputMethod.IsInputMethodEnabledProperty, false);
                 panel1.Children.Add(b);
+                Record();
+            }
+            else if (e.KeyStates == Keyboard.GetKeyStates(Key.Z) && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
+                Undo();
+            }
+            else if (e.KeyStates == Keyboard.GetKeyStates(Key.Y) && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
+                Redo();
             }
         }
         #endregion B
@@ -254,11 +273,11 @@ namespace LyricBlockMaker
             }
         }
 
-        bool isSelected = false;
-        bool isFirstSelected = true;
-        bool isSelectedOneLine = true;
-        int selectedRow = 0;
-        TextBox firstSelectedBox;
+        private bool isSelected = false;
+        private bool isFirstSelected = true;
+        private bool isSelectedOneLine = true;
+        private int selectedRow = 0;
+        private TextBox firstSelectedBox;
         private void A_MouseMove(object sender, MouseEventArgs e)
         {
             if (!isClicked)
@@ -355,7 +374,7 @@ namespace LyricBlockMaker
             }
         }
 
-        bool isClicked = false;
+        private bool isClicked = false;
         private void A_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true;
@@ -393,6 +412,7 @@ namespace LyricBlockMaker
                 TextBox firstBox = (TextBox)panel.Children[0];
                 firstBox.Text = (int.Parse(firstBox.Text) + 1).ToString();
                 newBox.Focus();
+                Record();
             }
             else if (e.Key == Key.Enter)//插入一行
             {
@@ -424,6 +444,7 @@ namespace LyricBlockMaker
                 b.PreviewKeyDown += B_PreviewKeyDown;
                 b.SetValue(InputMethod.IsInputMethodEnabledProperty, false);
                 panel1.Children.Add(b);
+                Record();
             }
             else if (e.Key == Key.Back)//删除文字
             {
@@ -472,6 +493,7 @@ namespace LyricBlockMaker
                     }
 
                 }
+                Record();
             }
             else if (e.Key == Key.Delete)//删除一格
             {
@@ -503,7 +525,7 @@ namespace LyricBlockMaker
                 {
                     firstBox.Text = "";
                 }
-
+                Record();
             }
             else if (e.Key == Key.Left)
             {
@@ -625,6 +647,7 @@ namespace LyricBlockMaker
                         }
                     }
                     Clipboard.SetDataObject(result);
+                    Record();
                 }
             }
             else if (e.KeyStates == Keyboard.GetKeyStates(Key.Z) && Keyboard.Modifiers == ModifierKeys.Control)
@@ -635,6 +658,7 @@ namespace LyricBlockMaker
                     Title += "*";
                 }
                 e.Handled = true;
+                Undo();
             }
             else if (e.KeyStates == Keyboard.GetKeyStates(Key.Y) && Keyboard.Modifiers == ModifierKeys.Control)
             {
@@ -644,6 +668,7 @@ namespace LyricBlockMaker
                     Title += "*";
                 }
                 e.Handled = true;
+                Redo();
             }
         }
 
@@ -669,17 +694,21 @@ namespace LyricBlockMaker
                     }
                     else
                     {
+                        box.Text = t.Substring(0, 1);
                         TextBox nextBox = (TextBox)stackPanel.Children[index + 1];
                         nextBox.Focus();
                         nextBox.Text = t.Substring(1);
                         nextBox.SelectionStart = nextBox.Text.Length;
-                        box.Text = t.Substring(0, 1);
                     }
+                }
+                if (t.Length == 1)
+                {
+                    Record();
                 }
             }
         }
 
-        protected bool IsAllChineseLetter(string input)
+        private bool IsAllChineseLetter(string input)
         {
             if (input != "" && input != null)
             {
@@ -722,7 +751,7 @@ namespace LyricBlockMaker
                     Close();
                 }
             }
-            
+
         }
 
         private void Export_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -756,7 +785,7 @@ namespace LyricBlockMaker
             }
         }
 
-        public static void WriteFile(string Path, string Strings)
+        private static void WriteFile(string Path, string Strings)
         {
             System.IO.FileStream f = System.IO.File.Create(Path);
             f.Close();
@@ -850,6 +879,7 @@ namespace LyricBlockMaker
                         TextBox box = (TextBox)panel.Children[panel.Children.Count - 1];
                         box.BorderThickness = new Thickness(0, 2, 2, 2);
                     }
+                    Record();
                 }
             }
             else
@@ -882,16 +912,12 @@ namespace LyricBlockMaker
                         }
                     }
                 }
+                Record();
             }
         }
 
         private void DeleteLine_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            isSaved = false;
-            if (!Title.EndsWith("*"))
-            {
-                Title += "*";
-            }
             bool delete = false;
             int row = 0;
             for (int i = 0; i < grid.RowDefinitions.Count - 1; i++)
@@ -910,19 +936,25 @@ namespace LyricBlockMaker
             }
             if (delete)
             {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
                 grid.Children.RemoveAt(row);
                 for (int i = row; i < grid.RowDefinitions.Count - 1; i++)
                 {
                     grid.Children[i].SetValue(Grid.RowProperty, i);
                 }
                 grid.RowDefinitions.RemoveAt(grid.RowDefinitions.Count - 1);
+                Record();
             }
         }
 
-        bool isSaved = false;
-        bool isFirstSave = true;
-        string fileName = "";
-        string name = "";
+        private bool isSaved = false;
+        private bool isFirstSave = true;
+        private string fileName = "";
+        private string name = "";
         private void Save_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             if (isFirstSave)
@@ -943,7 +975,7 @@ namespace LyricBlockMaker
                     f.Close();
                     f.Dispose();
                     string result = "";
-                    for (int i = 0; i < grid.RowDefinitions.Count - 1; i++)
+                    for (int i = 0; i < grid.RowDefinitions.Count; i++)
                     {
                         StackPanel panel = (StackPanel)grid.Children[i];
                         for (int j = 0; j < panel.Children.Count; j++)
@@ -953,7 +985,11 @@ namespace LyricBlockMaker
                             int column = j;
                             string text = box.Text;
                             int selectedPosition = 0;
-                            if (box.BorderThickness == new Thickness(2, 2, 0, 2))
+                            if (box.BorderThickness == new Thickness(1, 1, 1, 1))
+                            {
+                                selectedPosition = 0;
+                            }
+                            else if (box.BorderThickness == new Thickness(2, 2, 0, 2))
                             {
                                 selectedPosition = 1;
                             }
@@ -983,7 +1019,7 @@ namespace LyricBlockMaker
                 f.Close();
                 f.Dispose();
                 string result = "";
-                for (int i = 0; i < grid.RowDefinitions.Count - 1; i++)
+                for (int i = 0; i < grid.RowDefinitions.Count; i++)
                 {
                     StackPanel panel = (StackPanel)grid.Children[i];
                     for (int j = 0; j < panel.Children.Count; j++)
@@ -1038,7 +1074,7 @@ namespace LyricBlockMaker
         #endregion
 
         #region viewer
-        bool isSelecting = false;
+        private bool isSelecting = false;
         private void viewer_MouseDown(object sender, MouseButtonEventArgs e)
         {
             isSelecting = true;
@@ -1070,7 +1106,7 @@ namespace LyricBlockMaker
         }
         #endregion viewer
 
-        public void initiate(string fileContent, string fileName)
+        private void initiate(string fileContent, string fileName)
         {
             grid.Children.Clear();
             grid.RowDefinitions.Clear();
@@ -1186,6 +1222,8 @@ namespace LyricBlockMaker
                     }
                 }
             }
+            Title = "歌词本-" + Path.GetFileName(fileName);
+            Record();
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
@@ -1205,14 +1243,196 @@ namespace LyricBlockMaker
             proc.Start();
         }
 
+        private void Record()
+        {
+            String result = "";
+            for (int i = 0; i < grid.Children.Count; i++)
+            {
+                StackPanel panel = (StackPanel)grid.Children[i];
+                for (int j = 0; j < panel.Children.Count; j++)
+                {
+                    TextBox box = (TextBox)panel.Children[j];
+                    int row = i;
+                    int column = j;
+                    string text = box.Text;
+                    int selectedPosition = 0;
+                    if (box.BorderThickness == new Thickness(1, 1, 1, 1))
+                    {
+                        selectedPosition = 0;
+                    }
+                    else if (box.BorderThickness == new Thickness(2, 2, 0, 2))
+                    {
+                        selectedPosition = 1;
+                    }
+                    else if (box.BorderThickness == new Thickness(0, 2, 0, 2))
+                    {
+                        selectedPosition = 2;
+                    }
+                    else if (box.BorderThickness == new Thickness(0, 2, 2, 2))
+                    {
+                        selectedPosition = 3;
+                    }
+                    result += i + "," + j + "," + text + "," + selectedPosition + "," + "\r\n";
+                }
+            }
+            if (position < list.Items.Count - 1)
+            {
+                for (int i = position; i < list.Items.Count; i++)
+                {
+                    list.Items.RemoveAt(i);
+                }
+            }
+            list.Items.Insert(++position, result);
+        }
+        private void Undo()
+        {
+            if (position - 1 >= 0)
+            {
+                grid.Children.Clear();
+                grid.RowDefinitions.Clear();
+                string fileContent = (string)list.Items[--position];
+                fileContent = fileContent.Replace("\r\n", "\n");
+                string[] array = fileContent.Split('\n');
+                int line = -1;
+                StackPanel panel1 = new StackPanel();
+                for (int i = 0; i < array.Length - 1; i++)
+                {
+                    string[] a = array[i].Split(',');
+                    if (int.Parse(a[0]) != line)
+                    {
+                        grid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(30) });
+                        panel1 = new StackPanel();
+                        panel1.Orientation = Orientation.Horizontal;
+                        panel1.Height = 20;
+                        panel1.Margin = new Thickness(0, 10, 0, 0);
+                        panel1.SetValue(Grid.RowProperty, grid.RowDefinitions.Count - 1);
+                        grid.Children.Add(panel1);
+                        line++;
+                    }
+                    if (a[1] == "0")
+                    {
+                        var b = new TextBox();//数字格 列格
+                        b.Width = 20;
+                        b.Margin = new Thickness(10, 0, 10, 0);
+                        b.HorizontalContentAlignment = HorizontalAlignment.Center;
+                        b.VerticalContentAlignment = VerticalAlignment.Center;
+                        b.Text = a[2];
+                        b.PreviewTextInput += tb_PreviewTextInput;
+                        b.TextChanged += TextBox_TextChanged;
+                        b.PreviewKeyDown += B_PreviewKeyDown;
+                        b.SetValue(InputMethod.IsInputMethodEnabledProperty, false);
+                        panel1.Children.Add(b);
+                    }
+                    else
+                    {
+                        var aBox = new TextBox();//文字格
+                        aBox.Width = 20;
+                        aBox.Margin = new Thickness(5, 0, 0, 0);
+                        aBox.HorizontalContentAlignment = HorizontalAlignment.Center;
+                        aBox.VerticalContentAlignment = VerticalAlignment.Center;
+                        aBox.Text = a[2];
+                        aBox.TextChanged += A_TextChanged;
+                        aBox.PreviewKeyDown += A_KeyDown;
+                        aBox.PreviewMouseDown += A_PreviewMouseDown;
+                        aBox.MouseMove += A_MouseMove;
+                        aBox.LostFocus += A_LostFocus;
+                        aBox.GotFocus += A_GotFocus;
+                        if (a[3] == "1")
+                        {
+                            aBox.BorderThickness = new Thickness(2, 2, 0, 2);
+                        }
+                        else if (a[3] == "2")
+                        {
+                            aBox.BorderThickness = new Thickness(0, 2, 0, 2);
+                        }
+                        else if (a[3] == "3")
+                        {
+                            aBox.BorderThickness = new Thickness(0, 2, 2, 2);
+                        }
+                        panel1.Children.Add(aBox);
+                    }
+                }
+            }
+        }
+        private void Redo()
+        {
+            if (position + 1 <= list.Items.Count - 1)
+            {
+                grid.Children.Clear();
+                grid.RowDefinitions.Clear();
+                string fileContent = (string)list.Items[++position];
+                fileContent = fileContent.Replace("\r\n", "\n");
+                string[] array = fileContent.Split('\n');
+                int line = -1;
+                StackPanel panel1 = new StackPanel();
+                for (int i = 0; i < array.Length - 1; i++)
+                {
+                    string[] a = array[i].Split(',');
+                    if (int.Parse(a[0]) != line)
+                    {
+                        grid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(30) });
+                        panel1 = new StackPanel();
+                        panel1.Orientation = Orientation.Horizontal;
+                        panel1.Height = 20;
+                        panel1.Margin = new Thickness(0, 10, 0, 0);
+                        panel1.SetValue(Grid.RowProperty, grid.RowDefinitions.Count - 1);
+                        grid.Children.Add(panel1);
+                        line++;
+                    }
+                    if (a[1] == "0")
+                    {
+                        var b = new TextBox();//数字格 列格
+                        b.Width = 20;
+                        b.Margin = new Thickness(10, 0, 10, 0);
+                        b.HorizontalContentAlignment = HorizontalAlignment.Center;
+                        b.VerticalContentAlignment = VerticalAlignment.Center;
+                        b.Text = a[2];
+                        b.PreviewTextInput += tb_PreviewTextInput;
+                        b.TextChanged += TextBox_TextChanged;
+                        b.PreviewKeyDown += B_PreviewKeyDown;
+                        b.SetValue(InputMethod.IsInputMethodEnabledProperty, false);
+                        panel1.Children.Add(b);
+                    }
+                    else
+                    {
+                        var aBox = new TextBox();//文字格
+                        aBox.Width = 20;
+                        aBox.Margin = new Thickness(5, 0, 0, 0);
+                        aBox.HorizontalContentAlignment = HorizontalAlignment.Center;
+                        aBox.VerticalContentAlignment = VerticalAlignment.Center;
+                        aBox.Text = a[2];
+                        aBox.TextChanged += A_TextChanged;
+                        aBox.PreviewKeyDown += A_KeyDown;
+                        aBox.PreviewMouseDown += A_PreviewMouseDown;
+                        aBox.MouseMove += A_MouseMove;
+                        aBox.LostFocus += A_LostFocus;
+                        aBox.GotFocus += A_GotFocus;
+                        if (a[3] == "1")
+                        {
+                            aBox.BorderThickness = new Thickness(2, 2, 0, 2);
+                        }
+                        else if (a[3] == "2")
+                        {
+                            aBox.BorderThickness = new Thickness(0, 2, 0, 2);
+                        }
+                        else if (a[3] == "3")
+                        {
+                            aBox.BorderThickness = new Thickness(0, 2, 2, 2);
+                        }
+                        panel1.Children.Add(aBox);
+                    }
+                }
+            }
+        }
+
         private void Undo_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            recorder.Undo();
+            Undo();
         }
 
         private void Redo_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            recorder.Redo();
+            Redo();
         }
     }
 }
