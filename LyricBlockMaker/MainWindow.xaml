@@ -6,9 +6,10 @@
         xmlns:input="clr-namespace:System.Windows.Input;assembly=PresentationCore"
         xmlns:local="clr-namespace:LyricBlockMaker"
         mc:Ignorable="d"
-        Title="歌词本-未命名.blk*" Height="450" Width="800"
+        Title="歌词本-未命名.blk" Height="450" Width="800"
         WindowStartupLocation="CenterScreen"
         Icon="LyricBlock.ico"
+        Closing="Window_Closing"
         >
     <Window.Resources>
         <RoutedUICommand x:Key="Exit"/>

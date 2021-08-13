@@ -249,6 +249,10 @@ namespace LyricBlockMaker
                 }
                 Redo();
             }
+            else if (e.Key == Key.Space)
+            {
+                e.Handled = true;
+            }
         }
         #endregion B
 
@@ -951,7 +955,7 @@ namespace LyricBlockMaker
             }
         }
 
-        private bool isSaved = false;
+        private bool isSaved = true;
         private bool isFirstSave = true;
         private string fileName = "";
         private string name = "";
@@ -1435,6 +1439,17 @@ namespace LyricBlockMaker
         private void Redo_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             Redo();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (!isSaved)
+            {
+                if (MessageBox.Show("文件未保存，你确定要退出吗", "警告", MessageBoxButton.OKCancel) != MessageBoxResult.OK)
+                {
+                    e.Cancel = true;
+                }
+            }
         }
     }
 }
