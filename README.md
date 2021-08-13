@@ -1,2 +1,2 @@
 # LyricBlockMaker
-A lyric editor.
+Windows歌词编辑器。
