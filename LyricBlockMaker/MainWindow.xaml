@@ -6,8 +6,9 @@
         xmlns:input="clr-namespace:System.Windows.Input;assembly=PresentationCore"
         xmlns:local="clr-namespace:LyricBlockMaker"
         mc:Ignorable="d"
-        Title="歌词本" Height="450" Width="800"
+        Title="歌词本-未命名.blk*" Height="450" Width="800"
         WindowStartupLocation="CenterScreen"
+        Icon="LyricBlock.ico"
         >
     <Window.Resources>
         <RoutedUICommand x:Key="Exit"/>
@@ -18,6 +19,8 @@
         <RoutedUICommand x:Key="DeleteLine"/>
         <RoutedUICommand x:Key="Save"/>
         <RoutedUICommand x:Key="Open"/>
+        <RoutedUICommand x:Key="Undo"/>
+        <RoutedUICommand x:Key="Redo"/>
         <SolidColorBrush x:Key="Menu.Static.Foreground" Color="#FF212121"/>
         <SolidColorBrush x:Key="MenuItem.Highlight.Background" Color="#3D26A0DA"/>
         <SolidColorBrush x:Key="MenuItem.Highlight.Border" Color="#FF26A0DA"/>
@@ -324,6 +327,8 @@
         <CommandBinding Command="{StaticResource DeleteLine}" Executed="DeleteLine_Executed"/>
         <CommandBinding Command="{StaticResource Save}" Executed="Save_Executed"/>
         <CommandBinding Command="{StaticResource Open}" Executed="Open_Executed"/>
+        <CommandBinding Command="{StaticResource Undo}" Executed="Undo_Executed"/>
+        <CommandBinding Command="{StaticResource Redo}" Executed="Redo_Executed"/>
     </Window.CommandBindings>
     <Window.InputBindings>
         <KeyBinding Gesture="Ctrl+E" Command="{StaticResource Export}"/>
@@ -333,6 +338,8 @@
         <KeyBinding Gesture="Ctrl+L" Command="{StaticResource DeleteLine}"/>
         <KeyBinding Gesture="Ctrl+S" Command="{StaticResource Save}"/>
         <KeyBinding Gesture="Ctrl+O" Command="{StaticResource Open}"/>
+        <KeyBinding Gesture="Ctrl+Z" Command="{StaticResource Undo}"/>
+        <KeyBinding Gesture="Ctrl+Y" Command="{StaticResource Redo}"/>
     </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -348,12 +355,13 @@
                 <MenuItem Header="退出" Background="White" InputGestureText="Alt+F4" Command="{StaticResource Exit}"></MenuItem>
             </MenuItem>
             <MenuItem Header="编辑" Height="30">
-                <MenuItem Header="标记" Background="White" InputGestureText="Ctrl+D" Command="{StaticResource New}"></MenuItem>
-                <MenuItem Header="删除标记" Background="White" InputGestureText="Ctrl+F" Command="{StaticResource Open}"></MenuItem>
-                <MenuItem Header="删除行" Background="White" InputGestureText="Ctrl+L" Command="{StaticResource Save}"></MenuItem>
+                <MenuItem Header="标记" Background="White" InputGestureText="Ctrl+D" Command="{StaticResource UnderLine}"></MenuItem>
+                <MenuItem Header="删除标记" Background="White" InputGestureText="Ctrl+F" Command="{StaticResource DisunderLine}"></MenuItem>
+                <MenuItem Header="删除行" Background="White" InputGestureText="Ctrl+L" Command="{StaticResource DeleteLine}"></MenuItem>
                 <MenuItem Header="其他功能" Background="White" Click="MenuItem_Click"></MenuItem>
             </MenuItem>
             <MenuItem Header="帮助" Height="30">
+                <MenuItem Header="Github项目页" Click="MenuItem_Click_2"></MenuItem>
                 <MenuItem Header="关于" Click="MenuItem_Click_1"></MenuItem>
             </MenuItem>
         </Menu>

@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace LyricBlockMaker
 {
@@ -14,9 +14,11 @@ namespace LyricBlockMaker
 
     public partial class MainWindow : Window
     {
+        HistoryRecorder recorder = new HistoryRecorder();
         public MainWindow()
         {
             InitializeComponent();
+            recorder.setGrid(grid);
             string[] cmdLine = Environment.GetCommandLineArgs();
             if (cmdLine.Length > 1)
             {
@@ -54,13 +56,18 @@ namespace LyricBlockMaker
         public MainWindow(bool isMultiple)
         {
             InitializeComponent();
+            recorder.setGrid(grid);
         }
-        //Grid gridView = new Grid();
-        //HistoryRecorder recorder = new HistoryRecorder();
+
         #region B
         String beforeText = "";
         private void tb_PreviewTextInput(object sender, TextCompositionEventArgs e)//列方块输入的单个字符
         {
+            isSaved = false;
+            if (!Title.EndsWith("*"))
+            {
+                Title += "*";
+            }
             TextBox box = (TextBox)sender;
             Regex re = new Regex("[^0-9]+");
             e.Handled = re.IsMatch(e.Text);
@@ -69,6 +76,11 @@ namespace LyricBlockMaker
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)//检查全部数字
         {
+            isSaved = false;
+            if (!Title.EndsWith("*"))
+            {
+                Title += "*";
+            }
             TextBox box = (TextBox)sender;
             String t = box.Text;
             if (t != null && t != "")
@@ -132,7 +144,7 @@ namespace LyricBlockMaker
                 }
             }
         }
-        
+
         private void B_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             TextBox box = (TextBox)sender;
@@ -181,9 +193,46 @@ namespace LyricBlockMaker
             else if (e.KeyStates == Keyboard.GetKeyStates(Key.V) && Keyboard.Modifiers == ModifierKeys.Control)
             {
                 e.Handled = true;
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
+            }
+            else if (e.Key == Key.Enter)//插入一行
+            {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
+                e.Handled = true;
+                grid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(30) });
+                StackPanel panel1 = new StackPanel();
+                panel1.Orientation = Orientation.Horizontal;
+                panel1.Height = 20;
+                panel1.Margin = new Thickness(0, 10, 0, 0);
+                for (int i = grid.RowDefinitions.Count - 2; i > grid.Children.IndexOf(panel); i--)
+                {
+                    StackPanel panel2 = (StackPanel)grid.Children[i];
+                    panel2.SetValue(Grid.RowProperty, i + 1);
+                }
+                panel1.SetValue(Grid.RowProperty, grid.Children.IndexOf(panel) + 1);
+                grid.Children.Insert(grid.Children.IndexOf(panel) + 1, panel1);
+                var b = new TextBox();//数字格 列格
+                b.Width = 20;
+                b.Margin = new Thickness(10, 0, 10, 0);
+                b.HorizontalContentAlignment = HorizontalAlignment.Center;
+                b.VerticalContentAlignment = VerticalAlignment.Center;
+                b.PreviewTextInput += tb_PreviewTextInput;
+                b.TextChanged += TextBox_TextChanged;
+                b.PreviewKeyDown += B_PreviewKeyDown;
+                b.SetValue(InputMethod.IsInputMethodEnabledProperty, false);
+                panel1.Children.Add(b);
             }
         }
         #endregion B
+
         #region A
         private void A_GotFocus(object sender, RoutedEventArgs e)
         {
@@ -204,6 +253,7 @@ namespace LyricBlockMaker
                 box.CaretBrush = System.Windows.Media.Brushes.Transparent;
             }
         }
+
         bool isSelected = false;
         bool isFirstSelected = true;
         bool isSelectedOneLine = true;
@@ -304,6 +354,7 @@ namespace LyricBlockMaker
                 }
             }
         }
+
         bool isClicked = false;
         private void A_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -313,12 +364,18 @@ namespace LyricBlockMaker
             box.SelectionStart = box.Text.Length;
             isClicked = true;
         }
+
         private void A_KeyDown(object sender, KeyEventArgs e)
         {
             TextBox box = (TextBox)sender;
             StackPanel panel = (StackPanel)box.Parent;
             if (e.Key == Key.Space)//插入一格
             {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
                 e.Handled = true;
                 int index = panel.Children.IndexOf(box);
                 TextBox newBox = new TextBox();//a.Width
@@ -339,6 +396,11 @@ namespace LyricBlockMaker
             }
             else if (e.Key == Key.Enter)//插入一行
             {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
                 e.Handled = true;
                 grid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(30) });
                 StackPanel panel1 = new StackPanel();
@@ -365,6 +427,11 @@ namespace LyricBlockMaker
             }
             else if (e.Key == Key.Back)//删除文字
             {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
                 if (box.Text.Length <= 1)
                 {
                     e.Handled = true;
@@ -408,6 +475,11 @@ namespace LyricBlockMaker
             }
             else if (e.Key == Key.Delete)//删除一格
             {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
                 e.Handled = true;
                 int index = panel.Children.IndexOf(box);
                 panel.Children.RemoveAt(index);
@@ -533,6 +605,11 @@ namespace LyricBlockMaker
                 e.Handled = true;
                 if (isSelected)
                 {
+                    isSaved = false;
+                    if (!Title.EndsWith("*"))
+                    {
+                        Title += "*";
+                    }
                     string result = "";
                     for (int i = 0; i < grid.Children.Count; i++)
                     {
@@ -550,10 +627,33 @@ namespace LyricBlockMaker
                     Clipboard.SetDataObject(result);
                 }
             }
+            else if (e.KeyStates == Keyboard.GetKeyStates(Key.Z) && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
+                e.Handled = true;
+            }
+            else if (e.KeyStates == Keyboard.GetKeyStates(Key.Y) && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
+                e.Handled = true;
+            }
         }
 
         private void A_TextChanged(object sender, TextChangedEventArgs e)
         {
+            isSaved = false;
+            if (!Title.EndsWith("*"))
+            {
+                Title += "*";
+            }
             TextBox box = (TextBox)sender;
             StackPanel stackPanel = (StackPanel)box.Parent;
             String t = box.Text;
@@ -604,13 +704,25 @@ namespace LyricBlockMaker
             }
         }
         #endregion A
+
         #region 命令
         private void Exit_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            if (MessageBox.Show("你确定要退出吗", "警告", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+            if (!isSaved)
             {
-                Close();
+                if (MessageBox.Show("文件未保存，你确定要退出吗", "警告", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+                {
+                    Close();
+                }
             }
+            else
+            {
+                if (MessageBox.Show("你确定要退出吗", "警告", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+                {
+                    Close();
+                }
+            }
+            
         }
 
         private void Export_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -623,7 +735,7 @@ namespace LyricBlockMaker
             if (dlg.ShowDialog() == true)
             {
                 String result = "";
-                for (int i = 0; i < grid.RowDefinitions.Count - 1; i++)
+                for (int i = 0; i < grid.RowDefinitions.Count; i++)
                 {
                     StackPanel panel = (StackPanel)grid.Children[i];
                     for (int j = 0; j < panel.Children.Count; j++)
@@ -634,7 +746,7 @@ namespace LyricBlockMaker
                             result += box.Text;
                         }
                     }
-                    if (i != grid.RowDefinitions.Count - 2)
+                    if (i != grid.RowDefinitions.Count - 1)
                     {
                         result += "\r\n";
                     }
@@ -657,7 +769,16 @@ namespace LyricBlockMaker
 
         private void New_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            //TODO: 未保存询问
+            if (!isSaved)
+            {
+                if (MessageBox.Show("文件未保存，要保存吗", "警告", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+                {
+                    Save_Executed(sender, e);
+                }
+            }
+            isSaved = false;
+            isFirstSave = true;
+            Title = "歌词本-未命名.blk*";
             grid.Children.Clear();
             grid.RowDefinitions.Clear();
             grid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(30) });
@@ -678,12 +799,18 @@ namespace LyricBlockMaker
             b.SetValue(InputMethod.IsInputMethodEnabledProperty, false);
             panel1.Children.Add(b);
         }
+
         private void UnderLine_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             if (isSelectedOneLine)
             {
                 if (isSelected)
                 {
+                    isSaved = false;
+                    if (!Title.EndsWith("*"))
+                    {
+                        Title += "*";
+                    }
                     bool isFirst = true;
                     bool isStarted = false;
                     bool isClosed = false;
@@ -735,6 +862,11 @@ namespace LyricBlockMaker
         {
             if (isSelected)
             {
+                isSaved = false;
+                if (!Title.EndsWith("*"))
+                {
+                    Title += "*";
+                }
                 for (int i = 0; i < grid.Children.Count; i++)
                 {
                     StackPanel panel = (StackPanel)grid.Children[i];
@@ -755,6 +887,11 @@ namespace LyricBlockMaker
 
         private void DeleteLine_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            isSaved = false;
+            if (!Title.EndsWith("*"))
+            {
+                Title += "*";
+            }
             bool delete = false;
             int row = 0;
             for (int i = 0; i < grid.RowDefinitions.Count - 1; i++)
@@ -782,20 +919,67 @@ namespace LyricBlockMaker
             }
         }
 
+        bool isSaved = false;
+        bool isFirstSave = true;
+        string fileName = "";
+        string name = "";
         private void Save_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.FileName = "Lyric"; // Default file name
-            dlg.DefaultExt = ".blk"; // Default file extension
-            dlg.Filter = "Lyric Blocks (.blk)|*.blk"; // Filter files by extension
-            dlg.InitialDirectory = @"D:\LyricBlock";
-
-            // Process save file dialog box results
-            if (dlg.ShowDialog() == true)
+            if (isFirstSave)
             {
-                // Save document
-                string filename = dlg.FileName;
-                System.IO.FileStream f = System.IO.File.Create(filename);
+                Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+                dlg.FileName = "Lyric"; // Default file name
+                dlg.DefaultExt = ".blk"; // Default file extension
+                dlg.Filter = "Lyric Blocks (.blk)|*.blk"; // Filter files by extension
+                dlg.InitialDirectory = @"D:\LyricBlock";
+
+                // Process save file dialog box results
+                if (dlg.ShowDialog() == true)
+                {
+                    // Save document
+                    fileName = dlg.FileName;
+                    name = dlg.SafeFileName;
+                    System.IO.FileStream f = System.IO.File.Create(fileName);
+                    f.Close();
+                    f.Dispose();
+                    string result = "";
+                    for (int i = 0; i < grid.RowDefinitions.Count - 1; i++)
+                    {
+                        StackPanel panel = (StackPanel)grid.Children[i];
+                        for (int j = 0; j < panel.Children.Count; j++)
+                        {
+                            TextBox box = (TextBox)panel.Children[j];
+                            int row = i;
+                            int column = j;
+                            string text = box.Text;
+                            int selectedPosition = 0;
+                            if (box.BorderThickness == new Thickness(2, 2, 0, 2))
+                            {
+                                selectedPosition = 1;
+                            }
+                            else if (box.BorderThickness == new Thickness(0, 2, 0, 2))
+                            {
+                                selectedPosition = 2;
+                            }
+                            else if (box.BorderThickness == new Thickness(0, 2, 2, 2))
+                            {
+                                selectedPosition = 3;
+                            }
+                            result += i + "," + j + "," + text + "," + selectedPosition + "," + "\r\n";
+                        }
+                    }
+                    System.IO.StreamWriter f2 = new System.IO.StreamWriter(fileName, true, System.Text.Encoding.UTF8);
+                    f2.Write(result);
+                    f2.Close();
+                    f2.Dispose();
+                    Title = "歌词本-" + name;
+                    isSaved = true;
+                    isFirstSave = false;
+                }
+            }
+            else
+            {
+                System.IO.FileStream f = System.IO.File.Create(fileName);
                 f.Close();
                 f.Dispose();
                 string result = "";
@@ -824,15 +1008,24 @@ namespace LyricBlockMaker
                         result += i + "," + j + "," + text + "," + selectedPosition + "," + "\r\n";
                     }
                 }
-                System.IO.StreamWriter f2 = new System.IO.StreamWriter(filename, true, System.Text.Encoding.UTF8);
+                System.IO.StreamWriter f2 = new System.IO.StreamWriter(fileName, true, System.Text.Encoding.UTF8);
                 f2.Write(result);
                 f2.Close();
                 f2.Dispose();
+                Title = "歌词本-" + name;
+                isSaved = true;
             }
         }
 
         private void Open_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            if (!isSaved)
+            {
+                if (MessageBox.Show("文件未保存，要保存吗", "警告", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+                {
+                    Save_Executed(sender, e);
+                }
+            }
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.Filter = "Lyric Blocks (.blk)|*.blk|Text (.txt)|*.txt";
             if (openFileDialog.ShowDialog() == true)
@@ -843,6 +1036,7 @@ namespace LyricBlockMaker
             }
         }
         #endregion
+
         #region viewer
         bool isSelecting = false;
         private void viewer_MouseDown(object sender, MouseButtonEventArgs e)
@@ -1001,7 +1195,24 @@ namespace LyricBlockMaker
 
         private void MenuItem_Click_1(object sender, RoutedEventArgs e)
         {
+            MessageBox.Show("版本0.0.1", "关于", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
+        private void MenuItem_Click_2(object sender, RoutedEventArgs e)
+        {
+            Process proc = new System.Diagnostics.Process();
+            proc.StartInfo.FileName = "https://github.com/cubic759/LyricBlockMaker";
+            proc.Start();
+        }
+
+        private void Undo_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            recorder.Undo();
+        }
+
+        private void Redo_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            recorder.Redo();
         }
     }
 }
